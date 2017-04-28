@@ -80,6 +80,62 @@ vtkUnstructuredGrid* build3dTriangulatedUnstructuredGrid(double origin[3],
   return ug;
 }
 
+vtkUnstructuredGrid* build2dTriangulatedUnstructuredGrid(double origin[3],
+    double spacing[3],
+    int dimensions[3]){
+  vtkUnstructuredGrid* ug=vtkUnstructuredGrid::New();
+  vtkSmartPointer<vtkPoints> points=vtkSmartPointer<vtkPoints>::New();
+
+  double p[3];
+  for(int k=0; k<dimensions[2]; ++k){
+    for(int j=0; j<dimensions[1]; ++j){
+      for(int i=0; i<dimensions[0]; ++i){
+        p[0]=origin[0]+spacing[0]*i;
+        p[1]=origin[1]+spacing[1]*j;
+        p[2]=origin[2]+spacing[2]*k;
+        points->InsertNextPoint(p);
+      }
+    }
+  }
+
+  int Di{};
+  int Dj{};
+  if(dimensions[0]==1){
+    Di=1; Dj=2;
+  }
+  else if(dimensions[1]==1){
+    Di=0; Dj=2;
+  }
+  else{
+    Di=0; Dj=1;
+  }
+
+  int n=0;
+  vtkIdType ids[3];
+  int shiftJ=dimensions[Di];
+  for(int j=0; j<dimensions[Dj]-1; ++j){
+    for(int i=0; i<dimensions[Di]-1; ++i){
+      n=i+j*shiftJ;
+
+      //T1
+      ids[0]=n;
+      ids[1]=n+1;
+      ids[2]=n+shiftJ;
+      ug->InsertNextCell(VTK_TRIANGLE,3,ids);
+
+      //T2
+      ids[0]=n+1;
+      ids[1]=n+shiftJ+1;
+      ids[2]=n+shiftJ;
+      ug->InsertNextCell(VTK_TRIANGLE,3,ids);
+    }
+  }
+
+  ug->SetPoints(points);
+
+  return ug;
+}
+
 vtkImageData* buildImageData(double origin[3],
     double spacing[3],
     int dimensions[3]){
@@ -214,7 +270,7 @@ int testEdgeLink2D(Triangulation& vtu_triangulation, Triangulation& vti_triangul
       vtu_triangulation.getEdgeLink(i, j, vtu_linkId);
       tmp_vertices0.push_back(vtu_linkId);
     }
-    sort(tmp_vertices0.begin(), tmp_vertices0.begin());
+    sort(tmp_vertices0.begin(), tmp_vertices0.end());
     vertices0[i].push_back(tmp_vertices0);
 
     vector<int> tmp_v1;
@@ -231,7 +287,7 @@ int testEdgeLink2D(Triangulation& vtu_triangulation, Triangulation& vti_triangul
       vti_triangulation.getEdgeLink(i, j, vti_linkId);
       tmp_vertices1.push_back(vti_linkId);
     }
-    sort(tmp_vertices1.begin(), tmp_vertices1.begin());
+    sort(tmp_vertices1.begin(), tmp_vertices1.end());
     vertices1[i].push_back(tmp_vertices1);
   }
   sort(vertices0.begin(), vertices0.end(), cmp1);
@@ -279,7 +335,7 @@ int test3D(double origin[3], double spacing[3], int dimension[3]){
 }
 
 int test2D(double origin[3], double spacing[3], int dimension[3]){
-  vtkUnstructuredGrid* vtu=build3dTriangulatedUnstructuredGrid(origin, spacing, dimension);
+  vtkUnstructuredGrid* vtu=build2dTriangulatedUnstructuredGrid(origin, spacing, dimension);
   vtkImageData* vti=buildImageData(origin, spacing, dimension);
 
   Triangulation vtu_triangulation;
