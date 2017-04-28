@@ -205,6 +205,37 @@ int test3D(double origin[3], double spacing[3], int dimension[3]){
   return 0;
 }
 
+int testEdgeLink2D(Triangulation& vtu_triangulation, Triangulation& vti_triangulation){
+  cout << "test getEdgeLink()..." << endl;
+  cout << "OK" << endl;
+
+  return 0;
+}
+
+int test2D(double origin[3], double spacing[3], int dimension[3]){
+  vtkUnstructuredGrid* vtu=build3dTriangulatedUnstructuredGrid(origin, spacing, dimension);
+  vtkImageData* vti=buildImageData(origin, spacing, dimension);
+
+  Triangulation vtu_triangulation;
+  vtu_triangulation.setInputPoints(vtu->GetNumberOfPoints(), (float*)(vtu->GetPoints()->GetVoidPointer(0)));
+  vtu_triangulation.setInputCells(vtu->GetNumberOfCells(), vtu->GetCells()->GetPointer());
+  vtu_triangulation.preprocessEdges();
+  vtu_triangulation.preprocessEdgeLinks();
+  Triangulation vti_triangulation;
+  vti_triangulation.setInputGrid(origin[0], origin[1], origin[2],
+      spacing[0], spacing[1], spacing[2],
+      dimension[0], dimension[1], dimension[2]);
+  vti_triangulation.preprocessEdges();
+  vti_triangulation.preprocessEdgeLinks();
+
+  testEdgeLink2D(vtu_triangulation, vti_triangulation);
+
+  vtu->Delete();
+  vti->Delete();
+
+  return 0;
+}
+
 int main(int argc, char **argv) {
   double origin[3]{0,0,0};
   double spacing[3]{1,1,1};
@@ -216,10 +247,15 @@ int main(int argc, char **argv) {
   dimension[1]=atoi(argv[2]);
   dimension[2]=atoi(argv[3]);
 
-  if(dimension[0]<=1 or dimension[1]<=1 or dimension[2]<=1) return -1;
+  if(dimension[0]<1 or dimension[1]<1 or dimension[2]<1) return -1;
 
   if(dimension[0]>1 and dimension[1]>1 and dimension[2]>1)
    return test3D(origin, spacing, dimension);
+
+  if((dimension[0]==1 and dimension[1]>1 and dimension[2]>1) or
+      (dimension[0]>1 and dimension[1]==1 and dimension[2]>1) or
+      (dimension[0]>1 and dimension[1]>1 and dimension[2]==1))
+    return test2D(origin, spacing, dimension);
 
   return 0;
 }
