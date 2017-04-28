@@ -150,6 +150,11 @@ vtkImageData* buildImageData(double origin[3],
 }
 
 int testEdgeLink3D(Triangulation& vtu_triangulation, Triangulation& vti_triangulation){
+  vti_triangulation.preprocessEdges();
+  vti_triangulation.preprocessEdgeLinks();
+  vtu_triangulation.preprocessEdges();
+  vtu_triangulation.preprocessEdgeLinks();
+
   cout << "test getEdgeLink()..." << endl;
 
   const int vtu_numberOfEdges=vtu_triangulation.getNumberOfEdges();
@@ -237,7 +242,97 @@ int testEdgeLink3D(Triangulation& vtu_triangulation, Triangulation& vti_triangul
   return 0;
 }
 
+int testTriangleLink3D(Triangulation& vtu_triangulation, Triangulation& vti_triangulation){
+  vtu_triangulation.preprocessTriangles();
+  vtu_triangulation.preprocessTriangleLinks();
+  vti_triangulation.preprocessTriangles();
+  vti_triangulation.preprocessTriangleLinks();
+
+  cout << "test getTriangleLink()..." << endl;
+  const int vtu_numberOfTriangles=vtu_triangulation.getNumberOfTriangles();
+  const int vti_numberOfTriangles=vti_triangulation.getNumberOfTriangles();
+
+  if(vtu_numberOfTriangles!=vti_numberOfTriangles) return -1;
+
+  vector<vector<vector<int>>> vertices0(vtu_numberOfTriangles);
+  vector<vector<vector<int>>> vertices1(vtu_numberOfTriangles);
+
+  auto cmp1=[](vector<vector<int>>& a, vector<vector<int>>& b){
+    if(a[0][0]!=b[0][0]) return a[0][0]<b[0][0];
+    else if(a[0][1]!=b[0][1]) return a[0][1]<b[0][1];
+    else return a[0][2]<b[0][2];
+  };
+
+  for(int i=0; i<vtu_numberOfTriangles; ++i){
+    int v0;
+    int v1;
+    int v2;
+
+    vector<int> tmp_v0;
+    vtu_triangulation.getTriangleVertex(i, 0, v0);
+    vtu_triangulation.getTriangleVertex(i, 1, v1);
+    vtu_triangulation.getTriangleVertex(i, 2, v2);
+    tmp_v0.push_back(v0);
+    tmp_v0.push_back(v1);
+    tmp_v0.push_back(v2);
+    sort(tmp_v0.begin(), tmp_v0.end());
+    vertices0[i].push_back(tmp_v0);
+    const int vtu_linkNumber=vtu_triangulation.getTriangleLinkNumber(i);
+    vector<int> tmp_vertices0;
+    for(int j=0; j<vtu_linkNumber; ++j){
+      int vtu_linkId;
+      vtu_triangulation.getTriangleLink(i, j, vtu_linkId);
+      tmp_vertices0.push_back(vtu_linkId);
+    }
+    sort(tmp_vertices0.begin(), tmp_vertices0.end());
+    vertices0[i].push_back(tmp_vertices0);
+
+    vector<int> tmp_v1;
+    vti_triangulation.getTriangleVertex(i, 0, v0);
+    vti_triangulation.getTriangleVertex(i, 1, v1);
+    vti_triangulation.getTriangleVertex(i, 2, v2);
+    tmp_v1.push_back(v0);
+    tmp_v1.push_back(v1);
+    tmp_v1.push_back(v2);
+    sort(tmp_v1.begin(), tmp_v1.end());
+    vertices1[i].push_back(tmp_v1);
+    const int vti_linkNumber=vti_triangulation.getTriangleLinkNumber(i);
+    vector<int> tmp_vertices1;
+    for(int j=0; j<vti_linkNumber; ++j){
+      int vti_linkId;
+      vti_triangulation.getTriangleLink(i, j, vti_linkId);
+      tmp_vertices1.push_back(vti_linkId);
+    }
+    sort(tmp_vertices1.begin(), tmp_vertices1.end());
+    vertices1[i].push_back(tmp_vertices1);
+  }
+  sort(vertices0.begin(), vertices0.end(), cmp1);
+  sort(vertices1.begin(), vertices1.end(), cmp1);
+
+  for(int i=0; i<vtu_numberOfTriangles; ++i){
+    if(vertices0[i][0][0]!=vertices1[i][0][0]) return -1;
+    if(vertices0[i][0][1]!=vertices1[i][0][1]) return -1;
+    if(vertices0[i][0][2]!=vertices1[i][0][2]) return -1;
+
+    const int vtu_linkNumber=vertices0[i][1].size();
+    const int vti_linkNumber=vertices1[i][1].size();
+    if(vtu_linkNumber!=vti_linkNumber) return -1;
+
+    for(int j=0; j<vtu_linkNumber; ++j)
+      if(vertices0[i][1][j]!=vertices1[i][1][j]) return -1;
+  }
+
+  cout << "OK" << endl;
+
+  return 0;
+}
+
 int testEdgeLink2D(Triangulation& vtu_triangulation, Triangulation& vti_triangulation){
+  vtu_triangulation.preprocessEdges();
+  vtu_triangulation.preprocessEdgeLinks();
+  vti_triangulation.preprocessEdges();
+  vti_triangulation.preprocessEdgeLinks();
+
   cout << "test getEdgeLink()..." << endl;
   const int vtu_numberOfEdges=vtu_triangulation.getNumberOfEdges();
   const int vti_numberOfEdges=vti_triangulation.getNumberOfEdges();
@@ -317,16 +412,14 @@ int test3D(double origin[3], double spacing[3], int dimension[3]){
   Triangulation vtu_triangulation;
   vtu_triangulation.setInputPoints(vtu->GetNumberOfPoints(), (float*)(vtu->GetPoints()->GetVoidPointer(0)));
   vtu_triangulation.setInputCells(vtu->GetNumberOfCells(), vtu->GetCells()->GetPointer());
-  vtu_triangulation.preprocessEdges();
-  vtu_triangulation.preprocessEdgeLinks();
+
   Triangulation vti_triangulation;
   vti_triangulation.setInputGrid(origin[0], origin[1], origin[2],
       spacing[0], spacing[1], spacing[2],
       dimension[0], dimension[1], dimension[2]);
-  vti_triangulation.preprocessEdges();
-  vti_triangulation.preprocessEdgeLinks();
 
   testEdgeLink3D(vtu_triangulation, vti_triangulation);
+  testTriangleLink3D(vtu_triangulation, vti_triangulation);
 
   vtu->Delete();
   vti->Delete();
@@ -341,14 +434,11 @@ int test2D(double origin[3], double spacing[3], int dimension[3]){
   Triangulation vtu_triangulation;
   vtu_triangulation.setInputPoints(vtu->GetNumberOfPoints(), (float*)(vtu->GetPoints()->GetVoidPointer(0)));
   vtu_triangulation.setInputCells(vtu->GetNumberOfCells(), vtu->GetCells()->GetPointer());
-  vtu_triangulation.preprocessEdges();
-  vtu_triangulation.preprocessEdgeLinks();
+
   Triangulation vti_triangulation;
   vti_triangulation.setInputGrid(origin[0], origin[1], origin[2],
       spacing[0], spacing[1], spacing[2],
       dimension[0], dimension[1], dimension[2]);
-  vti_triangulation.preprocessEdges();
-  vti_triangulation.preprocessEdgeLinks();
 
   testEdgeLink2D(vtu_triangulation, vti_triangulation);
 
