@@ -470,14 +470,13 @@ int main(int argc, char **argv) {
   double spacing[3]{1,1,1};
   int dimension[3];
 
-  const int limit=256;
-
   if(argc!=2) return 0;
   srand(time(0));
 
-  const int dimensionality=atoi(argv[1]);
+  const int limit=atoi(argv[1]);
+  if(limit<2) return 0;
 
-  if(dimensionality==2){
+  {
     const int i=rand()%3;
     const int j=(i+1)%3;
     const int k=(i+2)%3;
@@ -486,7 +485,7 @@ int main(int argc, char **argv) {
     dimension[k]=(rand()%(limit-1))+2;
     return test2D(origin, spacing, dimension);
   }
-  else if(dimensionality==3){
+  {
     dimension[0]=(rand()%(limit-1))+2;
     dimension[1]=(rand()%(limit-1))+2;
     dimension[2]=(rand()%(limit-1))+2;
