@@ -155,7 +155,7 @@ int testEdgeLink3D(Triangulation& vtu_triangulation, Triangulation& vti_triangul
   vtu_triangulation.preprocessEdges();
   vtu_triangulation.preprocessEdgeLinks();
 
-  cout << "test getEdgeLink()..." << endl;
+  cout << "3D: test getEdgeLink()...";
 
   const int vtu_numberOfEdges=vtu_triangulation.getNumberOfEdges();
   const int vti_numberOfEdges=vti_triangulation.getNumberOfEdges();
@@ -248,7 +248,7 @@ int testTriangleLink3D(Triangulation& vtu_triangulation, Triangulation& vti_tria
   vti_triangulation.preprocessTriangles();
   vti_triangulation.preprocessTriangleLinks();
 
-  cout << "test getTriangleLink()..." << endl;
+  cout << "3D: test getTriangleLink()...";
   const int vtu_numberOfTriangles=vtu_triangulation.getNumberOfTriangles();
   const int vti_numberOfTriangles=vti_triangulation.getNumberOfTriangles();
 
@@ -333,7 +333,7 @@ int testEdgeLink2D(Triangulation& vtu_triangulation, Triangulation& vti_triangul
   vti_triangulation.preprocessEdges();
   vti_triangulation.preprocessEdgeLinks();
 
-  cout << "test getEdgeLink()..." << endl;
+  cout << "2D: test getEdgeLink()...";
   const int vtu_numberOfEdges=vtu_triangulation.getNumberOfEdges();
   const int vti_numberOfEdges=vti_triangulation.getNumberOfEdges();
 
@@ -418,8 +418,19 @@ int test3D(double origin[3], double spacing[3], int dimension[3]){
       spacing[0], spacing[1], spacing[2],
       dimension[0], dimension[1], dimension[2]);
 
-  testEdgeLink3D(vtu_triangulation, vti_triangulation);
-  testTriangleLink3D(vtu_triangulation, vti_triangulation);
+  int ret=0;
+
+  ret=testEdgeLink3D(vtu_triangulation, vti_triangulation);
+  if(ret){
+    cout << "\nError for dimensions: " <<  dimension[0] << " " << dimension[1] << " " << dimension[2] << endl;
+    return ret;
+  }
+
+  ret=testTriangleLink3D(vtu_triangulation, vti_triangulation);
+  if(ret){
+    cout << "\nError for dimensions : " <<  dimension[0] << " " << dimension[1] << " " << dimension[2] << endl;
+    return ret;
+  }
 
   vtu->Delete();
   vti->Delete();
@@ -440,7 +451,13 @@ int test2D(double origin[3], double spacing[3], int dimension[3]){
       spacing[0], spacing[1], spacing[2],
       dimension[0], dimension[1], dimension[2]);
 
-  testEdgeLink2D(vtu_triangulation, vti_triangulation);
+  int ret=0;
+
+  ret=testEdgeLink2D(vtu_triangulation, vti_triangulation);
+  if(ret){
+    cout << "\nError for dimensions: " <<  dimension[0] << " " << dimension[1] << " " << dimension[2] << endl;
+    return ret;
+  }
 
   vtu->Delete();
   vti->Delete();
@@ -453,21 +470,28 @@ int main(int argc, char **argv) {
   double spacing[3]{1,1,1};
   int dimension[3];
 
-  if(argc<4) return -1;
+  const int limit=256;
 
-  dimension[0]=atoi(argv[1]);
-  dimension[1]=atoi(argv[2]);
-  dimension[2]=atoi(argv[3]);
+  if(argc!=2) return 0;
+  srand(time(0));
 
-  if(dimension[0]<1 or dimension[1]<1 or dimension[2]<1) return -1;
+  const int dimensionality=atoi(argv[1]);
 
-  if(dimension[0]>1 and dimension[1]>1 and dimension[2]>1)
-   return test3D(origin, spacing, dimension);
-
-  if((dimension[0]==1 and dimension[1]>1 and dimension[2]>1) or
-      (dimension[0]>1 and dimension[1]==1 and dimension[2]>1) or
-      (dimension[0]>1 and dimension[1]>1 and dimension[2]==1))
+  if(dimensionality==2){
+    const int i=rand()%3;
+    const int j=(i+1)%3;
+    const int k=(i+2)%3;
+    dimension[i]=1;
+    dimension[j]=(rand()%(limit-1))+2;
+    dimension[k]=(rand()%(limit-1))+2;
     return test2D(origin, spacing, dimension);
+  }
+  else if(dimensionality==3){
+    dimension[0]=(rand()%(limit-1))+2;
+    dimension[1]=(rand()%(limit-1))+2;
+    dimension[2]=(rand()%(limit-1))+2;
+    return test3D(origin, spacing, dimension);
+  }
 
   return 0;
 }
