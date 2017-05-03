@@ -422,13 +422,13 @@ int test3D(double origin[3], double spacing[3], int dimension[3]){
 
   ret=testEdgeLink3D(vtu_triangulation, vti_triangulation);
   if(ret){
-    cout << "\nError for dimensions: " <<  dimension[0] << " " << dimension[1] << " " << dimension[2] << endl;
+    cout << "\nError3D: getEdgeLink() on (" <<  dimension[0] << "," << dimension[1] << "," << dimension[2] <<")"<< endl;
     return ret;
   }
 
   ret=testTriangleLink3D(vtu_triangulation, vti_triangulation);
   if(ret){
-    cout << "\nError for dimensions : " <<  dimension[0] << " " << dimension[1] << " " << dimension[2] << endl;
+    cout << "\nError3D: getTriangleLink() on (" <<  dimension[0] << "," << dimension[1] << "," << dimension[2] <<")"<< endl;
     return ret;
   }
 
@@ -455,7 +455,7 @@ int test2D(double origin[3], double spacing[3], int dimension[3]){
 
   ret=testEdgeLink2D(vtu_triangulation, vti_triangulation);
   if(ret){
-    cout << "\nError for dimensions: " <<  dimension[0] << " " << dimension[1] << " " << dimension[2] << endl;
+    cout << "\nError2D: getEdgeLink() on (" <<  dimension[0] << "," << dimension[1] << "," << dimension[2] <<")"<< endl;
     return ret;
   }
 
@@ -476,6 +476,8 @@ int main(int argc, char **argv) {
   const int limit=atoi(argv[1]);
   if(limit<2) return 0;
 
+  int ret=0;
+
   {
     const int i=rand()%3;
     const int j=(i+1)%3;
@@ -483,13 +485,15 @@ int main(int argc, char **argv) {
     dimension[i]=1;
     dimension[j]=(rand()%(limit-1))+2;
     dimension[k]=(rand()%(limit-1))+2;
-    return test2D(origin, spacing, dimension);
+    ret=test2D(origin, spacing, dimension);
+    if(ret) return ret;
   }
   {
     dimension[0]=(rand()%(limit-1))+2;
     dimension[1]=(rand()%(limit-1))+2;
     dimension[2]=(rand()%(limit-1))+2;
-    return test3D(origin, spacing, dimension);
+    ret=test3D(origin, spacing, dimension);
+    if(ret) return ret;
   }
 
   return 0;
