@@ -1,5 +1,5 @@
 // include the local headers
-#include                  <vtkProgramBase.h>
+#include                  <ttkProgramBase.h>
 
 vtkUnstructuredGrid* build3dTriangulatedUnstructuredGrid(double origin[3],
     double spacing[3],
