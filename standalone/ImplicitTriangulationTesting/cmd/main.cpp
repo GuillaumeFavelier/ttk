@@ -327,6 +327,63 @@ int testTriangleLink3D(Triangulation& vtu_triangulation, Triangulation& vti_tria
   return 0;
 }
 
+int testVertexTriangle3D(Triangulation& vtu_triangulation, Triangulation& vti_triangulation){
+  vtu_triangulation.preprocessTriangles();
+  vtu_triangulation.preprocessVertexTriangles();
+  vti_triangulation.preprocessTriangles();
+  vti_triangulation.preprocessVertexTriangles();
+
+  cout << "3D: test getVertexTriangle()...";
+  const int vtu_numberOfVertices=vtu_triangulation.getNumberOfVertices();
+  const int vti_numberOfVertices=vti_triangulation.getNumberOfVertices();
+
+  if(vtu_numberOfVertices!=vti_numberOfVertices) return -1;
+
+  auto cmp1=[](vector<int>& a, vector<int>& b){
+    if(a[0]!=b[0]) return a[0]<b[0];
+    else if(a[1]!=b[1]) return a[1]<b[1];
+    else return a[2]<b[2];
+  };
+
+  for(int i=0; i<vtu_numberOfVertices; ++i){
+    const int vtu_numberOfTriangles=vtu_triangulation.getVertexTriangleNumber(i);
+    const int vti_numberOfTriangles=vti_triangulation.getVertexTriangleNumber(i);
+
+    if(vtu_numberOfTriangles!=vti_numberOfTriangles) return -1;
+
+    vector<vector<int>> vtu_triangles;
+    vector<vector<int>> vti_triangles;
+    for(int j=0; j<vtu_numberOfTriangles; ++j){
+      int triangleId;
+      vector<int> triangle(3);
+
+      vtu_triangulation.getVertexTriangle(i, j, triangleId);
+      for(int k=0; k<3; ++k)
+        vtu_triangulation.getTriangleVertex(triangleId, k, triangle[k]);
+      sort(triangle.begin(), triangle.end());
+      vtu_triangles.push_back(triangle);
+
+      vti_triangulation.getVertexTriangle(i, j, triangleId);
+      for(int k=0; k<3; ++k)
+        vti_triangulation.getTriangleVertex(triangleId, k, triangle[k]);
+      sort(triangle.begin(), triangle.end());
+      vti_triangles.push_back(triangle);
+    }
+
+    sort(vtu_triangles.begin(), vtu_triangles.end(), cmp1);
+    sort(vti_triangles.begin(), vti_triangles.end(), cmp1);
+
+    for(int j=0; j<vtu_numberOfTriangles; ++j){
+      for(int k=0; k<3; ++k)
+        if(vtu_triangles[j][k]!=vti_triangles[j][k]) return -1;
+    }
+  }
+
+  cout << "OK" << endl;
+
+  return 0;
+}
+
 int testEdgeLink2D(Triangulation& vtu_triangulation, Triangulation& vti_triangulation){
   vtu_triangulation.preprocessEdges();
   vtu_triangulation.preprocessEdgeLinks();
@@ -419,6 +476,12 @@ int test3D(double origin[3], double spacing[3], int dimension[3]){
       dimension[0], dimension[1], dimension[2]);
 
   int ret=0;
+
+  ret=testVertexTriangle3D(vtu_triangulation, vti_triangulation);
+  if(ret){
+    cout << "\nError3D: getVertexTriangle() on (" <<  dimension[0] << "," << dimension[1] << "," << dimension[2] <<")"<< endl;
+    return ret;
+  }
 
   ret=testEdgeLink3D(vtu_triangulation, vti_triangulation);
   if(ret){
