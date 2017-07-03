@@ -978,7 +978,7 @@ int DiscreteGradient::testing_pl_compliance(const vector<pair<int,char>>& critic
         return -1;
       }
     }
-    else if(criticalPointType==1){
+    else if(criticalPointType==1 and dimensionality_==3){
       int isFound=0;
       const int edgeNumber=inputTriangulation_->getVertexEdgeNumber(criticalPointId);
       for(int i=0; i<edgeNumber; ++i){
