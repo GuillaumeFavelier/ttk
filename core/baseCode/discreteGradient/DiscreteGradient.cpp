@@ -490,7 +490,7 @@ int DiscreteGradient::getAscendingPath(const Cell& cell,
             isCycle[currentId]=true;
           }
           else{
-            cout << "[DiscreteGradient] Error : cycle detected in the path from tetraId=" << cell.id_ << endl;
+            cout << "[DiscreteGradient] Testing : cycle detected in the path from tetraId=" << cell.id_ << endl;
             break;
           }
         }
@@ -922,6 +922,93 @@ int DiscreteGradient::setGradientGlyphs() const{
 
   (*outputGradientGlyphs_numberOfPoints_)=pointId;
   (*outputGradientGlyphs_numberOfCells_)=cellId;
+
+  return 0;
+}
+
+int DiscreteGradient::testing_cycle() const{
+  if(dimensionality_==2){
+    const int numberOfEdges=inputTriangulation_->getNumberOfEdges();
+    for(int i=0; i<numberOfEdges; ++i){
+      if(isSaddle1(Cell(1,i))){
+        const int triangleNumber=inputTriangulation_->getEdgeStarNumber(i);
+        for(int j=0; j<triangleNumber; ++j){
+          int triangleId;
+          inputTriangulation_->getEdgeStar(i, j, triangleId);
+
+          vector<Cell> path;
+          if(getAscendingPath(Cell(3,triangleId), path, true))
+            return -1;
+        }
+      }
+    }
+  }
+  else if(dimensionality_==3){
+    const int numberOfTriangles=inputTriangulation_->getNumberOfTriangles();
+    for(int i=0; i<numberOfTriangles; ++i){
+      if(isSaddle2(Cell(2,i))){
+        const int starNumber=inputTriangulation_->getTriangleStarNumber(i);
+        for(int j=0; j<starNumber; ++j){
+          int starId;
+          inputTriangulation_->getTriangleStar(i, j, starId);
+
+          vector<Cell> path;
+          if(getAscendingPath(Cell(3,starId), path, true))
+            return -1;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+int DiscreteGradient::testing_pl_compliance(const vector<pair<int,char>>& criticalPoints) const{
+  const int maximumDim=dimensionality_;
+
+  for(const pair<int,char>& criticalPoint : criticalPoints){
+    const int criticalPointId=criticalPoint.first;
+    const char criticalPointType=criticalPoint.second;
+
+    if(inputTriangulation_->isVertexOnBoundary(criticalPointId))
+      continue;
+
+    if(criticalPointType==0){
+      if(!isMinimum(Cell(0,criticalPointId))){
+        cout << "[DiscreteGradient] Testing: Non PL-compliant PL-minimum vertexId=" << criticalPointId << endl;
+        return -1;
+      }
+    }
+    else if(criticalPointType==1){
+      int isFound=0;
+      const int edgeNumber=inputTriangulation_->getVertexEdgeNumber(criticalPointId);
+      for(int i=0; i<edgeNumber; ++i){
+        int edgeId;
+        inputTriangulation_->getVertexEdge(criticalPointId, i, edgeId);
+
+        if(isSaddle1(Cell(1,edgeId)))
+          ++isFound;
+      }
+      if(isFound!=1){
+        cout << "[DiscreteGradient] Testing: Non PL-compliant PL-saddle1 vertexId=" << criticalPointId << endl;
+        return -1;
+      }
+    }
+    else if(criticalPointType==maximumDim){
+      int isFound=0;
+      const int tetraNumber=inputTriangulation_->getVertexStarNumber(criticalPointId);
+      for(int i=0; i<tetraNumber; ++i){
+        int tetraId;
+        inputTriangulation_->getVertexStar(criticalPointId, i, tetraId);
+
+        if(isMaximum(Cell(maximumDim,tetraId)))
+          ++isFound;
+      }
+      if(isFound!=1){
+        cout << "[DiscreteGradient] Testing: Non PL-compliant PL-maximum vertexId=" << criticalPointId << " nstar=" << isFound << endl;
+        return -1;
+      }
+    }
+  }
 
   return 0;
 }

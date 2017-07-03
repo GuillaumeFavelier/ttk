@@ -791,6 +791,10 @@ namespace ttk{
 
       int setGradientGlyphs() const;
 
+      int testing_cycle() const;
+
+      int testing_pl_compliance(const vector<pair<int,char>>& criticalPoints) const;
+
     protected:
       int IterationThreshold;
       bool ReverseSaddleMaximumConnection;
@@ -5195,6 +5199,11 @@ int DiscreteGradient::reverseGradient(){
   }
 
   reverseGradient<dataType>(criticalPoints);
+
+  if(ReverseSaddleMaximumConnection or ReverseSaddleSaddleConnection){
+    testing_cycle();
+    testing_pl_compliance(criticalPoints);
+  }
 
   return 0;
 }
