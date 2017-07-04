@@ -959,6 +959,9 @@ int DiscreteGradient::testing_cycle() const{
       }
     }
   }
+
+  cout << "[DiscreteGradient] Testing: Cycle test finished successfully." << endl;
+
   return 0;
 }
 
@@ -1018,7 +1021,6 @@ int DiscreteGradient::testing_pl_compliance(const vector<pair<int,char>>& critic
   // check minima
   for(int i=0; i<numberOfVertices; ++i){
     if(isMinimum(Cell(0,i)) and isPL[i]!=0){
-      cout << (int)isPL[i] << endl;
       cout << "[DiscreteGradient] Testing: Extra DMT minimum id=" << i << endl;
       return -1;
     }
@@ -1036,9 +1038,10 @@ int DiscreteGradient::testing_pl_compliance(const vector<pair<int,char>>& critic
           isFound=true;
       }
 
-      if(!isFound)
+      if(!isFound){
         cout << "[DiscreteGradient] Testing: Extra DMT 1-saddle id=" << i << endl;
-      return -1;
+        return -1;
+      }
     }
   }
 
@@ -1054,11 +1057,14 @@ int DiscreteGradient::testing_pl_compliance(const vector<pair<int,char>>& critic
           isFound=true;
       }
 
-      if(!isFound)
+      if(!isFound){
         cout << "[DiscreteGradient] Testing: Extra DMT maximum id=" << i << endl;
-      return -1;
+        return -1;
+      }
     }
   }
+
+  cout << "[DiscreteGradient] Testing: PL conformance test finished successfully." << endl;
 
   return 0;
 }
