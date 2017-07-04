@@ -964,10 +964,15 @@ int DiscreteGradient::testing_cycle() const{
 
 int DiscreteGradient::testing_pl_compliance(const vector<pair<int,char>>& criticalPoints) const{
   const int maximumDim=dimensionality_;
+  const int numberOfVertices=inputTriangulation_->getNumberOfVertices();
+
+  vector<char> isPL(numberOfVertices, -1);
 
   for(const pair<int,char>& criticalPoint : criticalPoints){
     const int criticalPointId=criticalPoint.first;
     const char criticalPointType=criticalPoint.second;
+
+    isPL[criticalPointId]=criticalPointType;
 
     if(inputTriangulation_->isVertexOnBoundary(criticalPointId))
       continue;
@@ -1007,6 +1012,51 @@ int DiscreteGradient::testing_pl_compliance(const vector<pair<int,char>>& critic
         cout << "[DiscreteGradient] Testing: Non PL-compliant PL-maximum vertexId=" << criticalPointId << " nstar=" << isFound << endl;
         return -1;
       }
+    }
+  }
+
+  // check minima
+  for(int i=0; i<numberOfVertices; ++i){
+    if(isMinimum(Cell(0,i)) and isPL[i]!=0){
+      cout << (int)isPL[i] << endl;
+      cout << "[DiscreteGradient] Testing: Extra DMT minimum id=" << i << endl;
+      return -1;
+    }
+  }
+
+  // check 1-saddle
+  for(int i=0; i<inputTriangulation_->getNumberOfEdges(); ++i){
+    if(isSaddle1(Cell(1,i))){
+      bool isFound=false;
+      for(int j=0; j<2; ++j){
+        int vertexId;
+        inputTriangulation_->getEdgeVertex(i, j, vertexId);
+
+        if(isPL[vertexId]==1)
+          isFound=true;
+      }
+
+      if(!isFound)
+        cout << "[DiscreteGradient] Testing: Extra DMT 1-saddle id=" << i << endl;
+      return -1;
+    }
+  }
+
+  // check maximum
+  for(int i=0; i<inputTriangulation_->getNumberOfCells(); ++i){
+    if(isMaximum(Cell(maximumDim,i))){
+      bool isFound=false;
+      for(int j=0; j<(maximumDim+1); ++j){
+        int vertexId;
+        inputTriangulation_->getCellVertex(i, j, vertexId);
+
+        if(isPL[vertexId]==maximumDim)
+          isFound=true;
+      }
+
+      if(!isFound)
+        cout << "[DiscreteGradient] Testing: Extra DMT maximum id=" << i << endl;
+      return -1;
     }
   }
 
